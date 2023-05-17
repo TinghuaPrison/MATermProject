@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/home_page"
+        android:enabled="true"
+        android:icon="@drawable/bo_nav_home"
+        android:title="主页"/>
+
+    <item
+        android:id="@+id/search_page"
+        android:enabled="true"
+        android:icon="@drawable/bo_nav_search"
+        android:title="发现"/>
+
+    <item
+        android:id="@+id/message_page"
+        android:enabled="true"
+        android:icon="@drawable/bo_nav_message"
+        android:title="消息"/>
+
+    <item
+        android:id="@+id/mine_page"
+        android:enabled="true"
+        android:icon="@drawable/bo_nav_mine"
+        android:title="我的"/>
+</menu>
