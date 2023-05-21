@@ -21,10 +21,14 @@ import MyApp.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('register/', MyApp.views.register),
-    path('login/', MyApp.views.login),
-    path('edit_user/', MyApp.views.edit_user),
+    path('user/', MyApp.views.user),
     path('follow/', MyApp.views.follow),
     path('block/', MyApp.views.block),
+    path('message/', MyApp.views.message),
+    path('session/', MyApp.views.session),
     path('post/', MyApp.views.post),
+    path('likes/', MyApp.views.likes),
+    path('favorites/', MyApp.views.favorites),
+    path('comments/', MyApp.views.comments),
+    path('notification/', MyApp.views.notification),
 ]
