@@ -12,10 +12,6 @@ import android.view.ViewGroup;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
-import com.tsinghua.ss.client.index.HomeFragment;
-import com.tsinghua.ss.client.index.MessageFragment;
-import com.tsinghua.ss.client.index.MineFragment;
-import com.tsinghua.ss.client.index.SearchFragment;
 
 /**
  * A simple {@link Fragment} subclass.

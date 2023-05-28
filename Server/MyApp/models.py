@@ -1,7 +1,6 @@
 from django.db import models
 
 
-# Create your models here.
 class User(models.Model):
     username = models.CharField(max_length=30, unique=True)
     password = models.CharField(max_length=30)
@@ -39,7 +38,7 @@ class Session(models.Model):
     c_time = models.DateTimeField(auto_now_add=True)
 
 
-class Post(models.Model):
+class Moment(models.Model):
     username = models.CharField(max_length=30)
     type = models.CharField(max_length=10)
     content = models.TextField()
@@ -51,19 +50,19 @@ class Post(models.Model):
     c_time = models.DateTimeField(auto_now_add=True)
 
 
-class Likes(models.Model):
+class Like(models.Model):
     username = models.CharField(max_length=30)
-    post_id = models.IntegerField()
+    moment_id = models.IntegerField()
 
 
-class Favorites(models.Model):
+class Favorite(models.Model):
     username = models.CharField(max_length=30)
-    post_id = models.IntegerField()
+    moment_id = models.IntegerField()
 
 
-class Comments(models.Model):
+class Comment(models.Model):
     username = models.CharField(max_length=30)
-    post_id = models.IntegerField()
+    moment_id = models.IntegerField()
     content = models.TextField()
     c_time = models.DateTimeField(auto_now_add=True)
 

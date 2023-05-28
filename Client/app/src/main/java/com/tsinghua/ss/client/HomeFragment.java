@@ -1,4 +1,4 @@
-package com.tsinghua.ss.client.index;
+package com.tsinghua.ss.client;
 
 import android.os.Bundle;
 
@@ -14,11 +14,6 @@ import android.view.ViewGroup;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
-import com.tsinghua.ss.client.posts.FollowsFragment;
-import com.tsinghua.ss.client.posts.HotTopicFragment;
-import com.tsinghua.ss.client.posts.NewlyPostFragment;
-import com.tsinghua.ss.client.R;
-import com.tsinghua.ss.client.posts.RecommendedFragment;
 
 import java.util.Arrays;
 import java.util.List;

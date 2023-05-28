@@ -1,3 +1,4 @@
+import os.path
 import time
 from django.contrib.auth.hashers import make_password, check_password
 from django.http import JsonResponse
@@ -6,131 +7,156 @@ from .models import *
 from os import remove
 
 
-def user(request):
+def user_register(request):
     if request.method == 'POST':
-        if request.POST.get('_method') == 'register':
-            username = request.POST.get('username')
-            password = request.POST.get('password')
-            avatar: File = request.FILES.get('avatar')
-            bio = request.POST.get('bio', '')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        avatar: File = request.FILES.get('avatar')
+        bio = request.POST.get('bio', '')
 
-            if User.objects.filter(username=username).exists():
-                return JsonResponse({'error': 'Username is already taken.'}, status=400)
-            if avatar:
-                avatar_path = 'static/' + username + '_avatar_' + avatar.name
-                with open(avatar_path, 'wb+') as f:
-                    f.write(avatar.read())
-            else:
-                avatar_path = 'static/default_avatar.png'
-            _user = User(username=username, password=password, avatar=avatar_path, bio=bio)
-            _user.save()
-            return JsonResponse({'success': 'User registered successfully.'})
-        elif request.POST.get('_method') == 'login':
-            username = request.POST.get('username')
-            password = request.POST.get('password')
-
-            if not User.objects.filter(username=username).exists():
-                return JsonResponse({'error': 'User has not registered yet.'}, status=400)
-            else:
-                if check_password(password, User.objects.get(username=username).password):
-                    return JsonResponse({'success': 'User logged in successfully.'})
-                else:
-                    return JsonResponse({'error': 'Password is not correct.'}, status=400)
-        elif request.POST.get('_method') == 'edit_user':
-            username = request.POST.get('username')
-            new_username = request.POST.get('new_username')
-            password = request.POST.get('password')
-            avatar: File = request.FILES.get('avatar')
-            bio = request.POST.get('bio', '')
-
-            if new_username != username and User.objects.filter(username=new_username).exists():
-                return JsonResponse({'error': 'New username already exists.'}, status=400)
-            _user = User.objects.get(username=username)
-            _user.username = new_username
-            _user.password = make_password(password)
-            _user.bio = bio
-            if avatar:
-                avatar_path = user.avatar
-                remove(avatar_path)
-                avatar_path = 'static/images/' + username + '_avatar_' + avatar.name
-                with open(avatar_path, 'wb+') as f:
-                    f.write(avatar.read())
-                user.avatar = avatar_path
-            _user.save()
-            return JsonResponse({'success': 'User info modified successfully.'})
-        elif request.POST.get('_method') == 'get_all_users':
-            data = {}
-            users = User.objects.values()
-            data['list'] = list(users)
-            return JsonResponse(data)
-        elif request.POST.get('_method') == 'get_user':
-            username = request.POST.get('username')
-            users = User.objects.filter(username=username).values()
-            data = {'list': list(users)}
-            return JsonResponse(data)
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({'error': 'Username is already taken.'}, status=400)
+        if avatar:
+            avatar_path = 'static/' + username + '_avatar_' + avatar.name
+            with open(avatar_path, 'wb+') as f:
+                f.write(avatar.read())
         else:
-            return JsonResponse({'error': 'Invalid request method.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
+            avatar_path = 'static/default_avatar.png'
+        _user = User(username=username, password=make_password(password), avatar=avatar_path, bio=bio)
+        _user.save()
+        return JsonResponse({'success': 'User registered successfully.'})
+
+
+def user_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        if not User.objects.filter(username=username).exists():
+            return JsonResponse({'error': 'User has not registered yet.'}, status=400)
+        else:
+            if check_password(password, User.objects.get(username=username).password):
+                return JsonResponse({'success': 'User logged in successfully.'})
+            else:
+                return JsonResponse({'error': 'Password is not correct.'}, status=401)
+
+
+def user_edit(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        newname = request.POST.get('newname')
+        password = request.POST.get('password')
+        avatar: File = request.FILES.get('avatar')
+        bio = request.POST.get('bio', '')
+
+        if newname != username and User.objects.filter(username=newname).exists():
+            return JsonResponse({'error': 'New username already exists.'}, status=400)
+        _user = User.objects.get(username=username)
+        _user.username = newname
+        _user.password = make_password(password)
+        _user.bio = bio
+        if avatar:
+            avatar_path = 'static/' + username + '_avatar_' + avatar.name
+            with open(avatar_path, 'wb+') as f:
+                f.write(avatar.read())
+            _user.avatar = avatar_path
+        _user.save()
+        return JsonResponse({'success': 'User info modified successfully.'})
+
+
+def get_all_users(request):
+    if request.method == 'GET':
+        data = {}
+        users = User.objects.values()
+        data['user_list'] = list(users)
+        return JsonResponse(data, safe=False)
+
+
+def get_user(request):
+    if request.method == 'GET':
+        username = request.GET.get('username')
+        user = User.objects.filter(username=username).values()
+        data = {'user': list(user)}
+        return JsonResponse(data, safe=False)
 
 
 def follow(request):
     if request.method == 'POST':
-        if request.POST.get('_method') == 'PUT':
-            follower = request.POST.get('follower')
-            followee = request.POST.get('followee')
-            Follow(follower=follower, followee=followee).save()
-        elif request.POST.get('_method') == 'DELETE':
-            follower = request.POST.get('follower')
-            followee = request.POST.get('followee')
-            Follow.objects.get(follower=follower, followee=followee).delete()
-        elif request.POST.get('_method') == 'get_follower_list':
-            followee = request.POST.get('followee')
-            data = {}
-            follower = Follow.objects.filter(followee=followee).values()
-            data['list'] = list(follower)
-            return JsonResponse(data)
-        elif request.POST.get('_method') == 'get_followee_list':
-            follower = request.POST.get('follower')
-            data = {}
-            followee = Follow.objects.filter(follower=follower).values()
-            data['list'] = list(followee)
-            return JsonResponse(data)
-        else:
-            return JsonResponse({'error': 'Invalid request method.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
+        follower = request.POST.get('follower')
+        followee = request.POST.get('followee')
+        Follow(follower=follower, followee=followee).save()
+        return JsonResponse({'success': 'Followed successfully.'})
+
+
+def unfollow(request):
+    if request.method == 'POST':
+        follower = request.POST.get('follower')
+        followee = request.POST.get('followee')
+        Follow.objects.get(follower=follower, followee=followee).delete()
+        return JsonResponse({'success': 'Unfollowed successfully.'})
+
+
+def get_followers(request):
+    if request.method == 'GET':
+        followee = request.GET.get('username')
+        data = {}
+        follower_list = []
+        for i in Follow.objects.filter(followee=followee).all():
+            follower_list += list(User.objects.filter(username=i.follower).values())
+        data['list'] = follower_list
+        return JsonResponse(data)
+
+
+def get_followees(request):
+    if request.method == 'GET':
+        follower = request.GET.get('username')
+        data = {}
+        followee_list = []
+        for i in Follow.objects.filter(follower=follower).all():
+            followee_list += list(User.objects.filter(username=i.followee).values())
+        data['list'] = followee_list
+        return JsonResponse(data)
 
 
 def block(request):
     if request.method == 'POST':
-        if request.POST.get('_method') == 'PUT':
-            blocker = request.POST.get('blocker')
-            blocked = request.POST.get('blocked')
-            Block(blocker=blocker, blocked=blocked).save()
-        elif request.POST.get('_method') == 'DELETE':
-            blocker = request.POST.get('blocker')
-            blocked = request.POST.get('blocked')
-            Block.objects.get(blocker=blocker, blocked=blocked).delete()
-        elif request.POST.get('_method') == 'get_blocker_list':
-            blocked = request.POST.get('blocked')
-            data = {}
-            blocker = Block.objects.filter(blocked=blocked).values()
-            data['list'] = list(blocker)
-            return JsonResponse(data)
-        elif request.POST.get('_method') == 'get_blocked_list':
-            blocker = request.POST.get('blocker')
-            data = {}
-            blocked = Follow.objects.filter(blocker=blocker).values()
-            data['list'] = list(blocked)
-            return JsonResponse(data)
-        else:
-            return JsonResponse({'error': 'Invalid request method.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
+        blocker = request.POST.get('blocker')
+        blocked = request.POST.get('blocked')
+        Block(blocker=blocker, blocked=blocked).save()
+        return JsonResponse({'success': 'Blocked successfully.'})
 
 
-def message(request):
+def unblock(request):
+    if request.method == 'POST':
+        blocker = request.POST.get('blocker')
+        blocked = request.POST.get('blocked')
+        Block.objects.get(blocker=blocker, blocked=blocked).delete()
+        return JsonResponse({'success': 'Unblocked successfully.'})
+
+
+def get_blockers(request):
+    if request.method == 'GET':
+        blocked = request.POST.get('username')
+        data = {}
+        blocker_list = []
+        for i in Block.objects.filter(blocked=blocked).all():
+            blocker_list += list(User.objects.filter(username=i.blocker).values())
+        data['list'] = blocker_list
+        return JsonResponse(data)
+
+
+def get_blockeds(request):
+    if request.method == 'GET':
+        blocker = request.POST.get('username')
+        data = {}
+        blocked_list = []
+        for i in Block.objects.filter(blocker=blocker).all():
+            blocked_list += list(User.objects.filter(username=i.blocked).values())
+        data['list'] = blocked_list
+        return JsonResponse(data)
+
+
+def send_message(request):
     if request.method == 'POST':
         sender = request.POST.get('sender')
         receiver = request.POST.get('receiver')
@@ -145,193 +171,238 @@ def message(request):
         s.message_not_checked += 1
         s.last_message = content
         s.save()
-        return JsonResponse({'success': 'Message send successfully.'})
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
+        return JsonResponse({'success': 'Message sent successfully.'})
 
 
-def session(request):
+def start_session(request):
     if request.method == 'POST':
-        if request.POST.get('_method') == 'start':
-            username = request.POST.get('username')
-            target = request.POST.get('target')
-            if Session.objects.filter(username=username, target=target).exists():
-                Session.objects.get(username=username, target=target).message_not_checked = 0
-                data = {}
-                sent = Message.objects.filter(sender=username, receiver=target).values()
-                received = Message.objects.filter(sender=target, receiver=username).values()
-                messages = list(sent) + list(received)
-                sorted_messages = sorted(messages, key=lambda x: x['c_time'])
-                data['message_list'] = sorted_messages
-                return JsonResponse(data)
-            else:
-                Session(username=username, target=target).save()
-                Session(username=target, target=username).save()
-                return JsonResponse({''}, status=201)
-        elif request.POST.get('_method') == 'get_session_list':
-            username = request.POST.get('username')
+        username = request.POST.get('username')
+        target = request.POST.get('target')
+        if Session.objects.filter(username=username, target=target).exists():
+            s = Session.objects.get(username=username, target=target)
+            s.message_not_checked = 0
+            s.save()
             data = {}
-            sessions = Session.objects.filter(username=username).values()
-            data['list'] = list(sessions)
+            sent = Message.objects.filter(sender=username, receiver=target).values()
+            received = Message.objects.filter(sender=target, receiver=username).values()
+            messages = list(sent) + list(received)
+            sorted_messages = sorted(messages, key=lambda x: x['c_time'])
+            data['message_list'] = sorted_messages
             return JsonResponse(data)
         else:
-            return JsonResponse({'error': 'Invalid request method.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
+            Session(username=username, target=target).save()
+            Session(username=target, target=username).save()
+            return JsonResponse({'success': 'Session created successfully.'}, status=201)
 
 
-def post(request):
+def get_sessions(request):
+    if request.method == 'GET':
+        username = request.POST.get('username')
+        data = {}
+        sessions = Session.objects.filter(username=username).values()
+        data['list'] = list(sessions)
+        return JsonResponse(data)
+
+
+def post_moment(request):
     if request.method == 'POST':
-        if request.POST.get('_method') == 'GET':
-            if request.POST.get('sorted_by') == 'new':
-                data = {}
-                posts = Post.objects.all().values()
-                posts_list = sorted(list(posts), key=lambda x: x['c_time'])
-                data['list'] = posts_list
-                return JsonResponse(data)
-            elif request.POST.get('sorted_by') == 'hot':
-                data = {}
-                posts = Post.objects.all().values()
-                posts_list = sorted(list(posts),
-                                    key=lambda x: x['likes_count'] + x['favorites_count'] + x['comments_count'])
-                data['list'] = posts_list
-                return JsonResponse(data)
-            elif request.POST.get('sorted_by') == 'follow':
-                follower = request.POST.get('follower')
-                data = {}
-                followee = Follow.objects.get(follower=follower)
-                posts = Post.objects.filter(username=followee.followee)
-                posts_list = sorted(list(posts), key=lambda x: x['c_time'])
-                data['list'] = posts_list
-                return JsonResponse(data)
-            elif request.POST.get('sorted_by') == 'type':
-                _type = request.POST.get('type')
-                data = {}
-                posts = Post.objects.filter(type=_type).values()
-                posts_list = sorted(list(posts), key=lambda x: x['c_time'])
-                data['list'] = posts_list
-                return JsonResponse(data)
-        elif request.POST.get('_method') == 'POST':
-            username = request.POST.get('username')
-            _type = request.POST.get('type')
-            content = request.POST.get('content')
-            medias = request.FILES.getlist('media')
-            media = ''
-            for fm in medias:
-                save_path = 'static/' + username + '_post_' + str(time.time()) + '_' + fm.name
-                with open(save_path, 'wb+') as f:
-                    f.write(fm.read())
-                media += save_path + '#'
-            location = request.POST.get('location')
-            Post(username=username, type=_type, content=content, media=media, location=location).save()
+        username = request.POST.get('username')
+        _type = request.POST.get('type')
+        content = request.POST.get('content')
+        medias = request.FILES.getlist('media')
+        media = ''
+        for fm in medias:
+            save_path = 'static/' + username + '_post_' + str(int(time.time() * (10 ** 4))) + '_' + fm.name
+            with open(save_path, 'wb+') as f:
+                f.write(fm.read())
+            media += save_path + '##'
+        location = request.POST.get('location')
+        Moment(username=username, type=_type, content=content, media=media, location=location).save()
         return JsonResponse({'success': 'Post successfully.'})
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
 
-def likes(request):
-    if request.method == 'POST':
-        if request.POST.get('_method') == 'GET':
-            username = request.POST.get('username')
+def get_moments(request):
+    if request.method == 'GET':
+        username = request.GET.get('username')
+        if request.GET.get('sorted_by') == 'new':
             data = {}
-            all_likes = Likes.objects.filter(username=username).values()
-            data['list'] = list(all_likes)
+            moments = Moment.objects.all().values()
+            moments_list = sorted(list(moments), key=lambda x: x['c_time'], reverse=True)
+            for i in moments_list:
+                if Block.objects.filter(blocker=username, blocked=i['username']):
+                    moments_list.remove(i)
+            data['list'] = moments_list
             return JsonResponse(data)
-        elif request.POST.get('_method') == 'POST':
-            username = request.POST.get('username')
-            post_id = request.POST.get('post_id')
-            Likes(username=username, post_id=post_id).save()
-            _post = Post.objects.get(id=post_id)
-            _post.likes_count += 1
-            _post.save()
-        elif request.POST.get('_method') == 'DELETE':
-            username = request.POST.get('username')
-            post_id = request.POST.get('post_id')
-            _post = Post.objects.get(id=post_id)
-            _post.likes_count -= 1
-            _post.save()
-            Likes(username=username, post_id=post_id).delete()
-            return JsonResponse({'success': 'Delete likes successfully.'})
-        else:
-            return JsonResponse({'error': 'Invalid request method.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
-
-
-def favorites(request):
-    if request.method == 'POST':
-        if request.POST.get('_method') == 'GET':
-            username = request.POST.get('username')
+        elif request.GET.get('sorted_by') == 'hot':
             data = {}
-            all_favorites = Favorites.objects.filter(username=username).values()
-            data['list'] = list(all_favorites)
+            moments = Moment.objects.all().values()
+            moments_list = sorted(list(moments),
+                                key=lambda x: x['likes_count'] + x['favorites_count'] + x['comments_count'])
+            for i in moments_list:
+                if Block.objects.filter(blocker=username, blocked=i['username']):
+                    moments_list.remove(i)
+            data['list'] = moments_list
             return JsonResponse(data)
-        elif request.POST.get('_method') == 'POST':
-            username = request.POST.get('username')
-            post_id = request.POST.get('post_id')
-            Favorites(username=username, post_id=post_id).save()
-            _post = Post.objects.get(id=post_id)
-            _post.favorites_count += 1
-            _post.save()
-        elif request.POST.get('_method') == 'DELETE':
-            username = request.POST.get('username')
-            post_id = request.POST.get('post_id')
-            _post = Post.objects.get(id=post_id)
-            _post.favorites_count -= 1
-            _post.save()
-            Favorites(username=username, post_id=post_id).delete()
-            return JsonResponse({'success': 'Delete favorites successfully.'})
-        else:
-            return JsonResponse({'error': 'Invalid request method.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
-
-
-def comments(request):
-    if request.method == 'POST':
-        if request.POST.get('_method') == 'GET':
-            username = request.POST.get('username')
+        elif request.GET.get('sorted_by') == 'follow':
             data = {}
-            all_comments = Comments.objects.filter(username=username).values()
-            data['list'] = list(all_comments)
+            followee = Follow.objects.get(follower=username)
+            moments = Moment.objects.filter(username=followee.followee).values()
+            moments_list = sorted(list(moments), key=lambda x: x['c_time'])
+            for i in moments_list:
+                if Block.objects.filter(blocker=username, blocked=i['username']):
+                    moments_list.remove(i)
+            data['list'] = moments_list
             return JsonResponse(data)
-        elif request.POST.get('_method') == 'POST':
-            username = request.POST.get('username')
-            post_id = request.POST.get('post_id')
-            content = request.POST.get('content')
-            Comments(username=username, post_id=post_id, content=content).save()
-            _post = Post.objects.get(id=post_id)
-            _post.comments_count += 1
-            _post.save()
-        elif request.POST.get('_method') == 'DELETE':
-            username = request.POST.get('username')
-            post_id = request.POST.get('post_id')
-            _post = Post.objects.get(id=post_id)
-            _post.comments_count -= 1
-            _post.save()
-            Comments(username=username, post_id=post_id).delete()
-            return JsonResponse({'success': 'Delete favorites successfully.'})
-        else:
-            return JsonResponse({'error': 'Invalid request method.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
-
-
-def notification(request):
-    if request.method == 'POST':
-        if request.POST.get('_method') == 'GET':
-            username = request.POST.get('username')
+        elif request.GET.get('sorted_by') == 'type':
+            _type = request.GET.get('type')
             data = {}
-            notifications = Notification.objects.filter(username=username).values()
-            data['list'] = list(notifications)
+            moments = Moment.objects.filter(type=_type).values()
+            moments_list = sorted(list(moments), key=lambda x: x['c_time'])
+            for i in moments_list:
+                if Block.objects.filter(blocker=username, blocked=i['username']):
+                    moments_list.remove(i)
+            data['list'] = moments_list
             return JsonResponse(data)
-        elif request.POST.get('_method') == 'POST':
-            username = request.POST.get('username')
-            title = request.POST.get('title')
-            content = request.POST.get('content')
-            Notification(username=username, title=title, content=content).save()
-            return JsonResponse({'success': 'Notification successfully.'})
-        else:
-            return JsonResponse({'error': 'Invalid request method.'}, status=400)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
+
+def like_moment(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        moment_id = request.POST.get('moment_id')
+        Like(username=username, moment_id=moment_id).save()
+        moment = Moment.objects.get(id=moment_id)
+        moment.likes_count += 1
+        moment.save()
+        return JsonResponse({'success': 'Like successfully.'})
+
+
+def unlike_moment(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        moment_id = request.POST.get('moment_id')
+        moment = Moment.objects.get(id=moment_id)
+        moment.likes_count -= 1
+        moment.save()
+        Like.objects.get(username=username, moment_id=moment_id).delete()
+        return JsonResponse({'success': 'Unlike successfully.'})
+
+
+def get_like_moments(request):
+    if request.method == 'GET':
+        username = request.GET.get('username')
+        data = {}
+        moment_list = []
+        for i in Like.objects.filter(username=username).all():
+            moment_list += list(Moment.objects.filter(id=i.moment_id).values())
+        moment_list.reverse()
+        data['list'] = moment_list
+        return JsonResponse(data)
+
+
+def get_moment_likes(request):
+    if request.method == 'GET':
+        moment_id = request.GET.get('moment_id')
+        data = {}
+        user_list = []
+        for i in Like.objects.filter(moment_id=moment_id).all():
+            user_list += list(User.objects.filter(username=i.username).values())
+        data['list'] = user_list
+        return JsonResponse(data)
+
+
+def favorite_moment(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        moment_id = request.POST.get('moment_id')
+        Favorite(username=username, moment_id=moment_id).save()
+        moment = Moment.objects.get(id=moment_id)
+        moment.favorites_count += 1
+        moment.save()
+        return JsonResponse({'success': 'Favorite successfully.'})
+
+
+def unfavorite_moment(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        moment_id = request.POST.get('moment_id')
+        moment = Moment.objects.get(id=moment_id)
+        moment.favorites_count -= 1
+        moment.save()
+        Favorite.objects.filter(username=username, moment_id=moment_id).delete()
+        return JsonResponse({'success': 'Unfavorite successfully.'})
+
+
+def get_favorite_moments(request):
+    if request.method == 'GET':
+        username = request.GET.get('username')
+        data = {}
+        moment_list = []
+        for i in Favorite.objects.filter(username=username).all():
+            moment_list += list(Moment.objects.filter(id=i.moment_id).values())
+        data['list'] = moment_list
+        return JsonResponse(data)
+
+
+def get_moment_favorites(request):
+    if request.method == 'GET':
+        moment_id = request.GET.get('moment_id')
+        data = {}
+        user_list = []
+        for i in Favorite.objects.filter(moment_id=moment_id).all():
+            user_list += list(User.objects.filter(username=i.username).values())
+        data['list'] = user_list
+        return JsonResponse(data)
+
+
+def comment_moment(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        moment_id = request.POST.get('moment_id')
+        content = request.POST.get('content')
+        Comment(username=username, moment_id=moment_id, content=content).save()
+        moment = Moment.objects.get(id=moment_id)
+        moment.comments_count += 1
+        moment.save()
+        return JsonResponse({'success': 'Comment successfully.'})
+
+
+def get_comment_moments(request):
+    if request.method == 'GET':
+        username = request.GET.get('username')
+        data = {}
+        moment_list = []
+        for i in Comment.objects.filter(username=username).all():
+            l = list(Moment.objects.filter(id=i.moment_id).values())
+            set1 = {tuple(d.items()) for d in moment_list}
+            set2 = {tuple(d.items()) for d in l}
+            union_set = set1.union(set2)
+            moment_list = [dict(item) for item in union_set]
+        data['list'] = moment_list
+        return JsonResponse(data)
+
+
+def get_moment_comments(request):
+    if request.method =='GET':
+        moment_id = request.GET('moment_id')
+        data = {}
+        comment_list = list(Comment.objects.filter(moment_id=moment_id).values())
+        data['list'] = comment_list
+        return JsonResponse(data)
+
+
+def post_notification(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        Notification(username=username, title=title, content=content).save()
+        return JsonResponse({'success': 'Notification successfully.'})
+
+
+def get_notifications(request):
+    if request.method == 'GET':
+        username = request.GET.get('username')
+        data = {}
+        notifications = Notification.objects.filter(username=username).values()
+        data['list'] = list(notifications)
+        return JsonResponse(data)

@@ -1,4 +1,4 @@
-package com.tsinghua.ss.client.posts;
+package com.tsinghua.ss.client;
 
 import android.os.Bundle;
 
@@ -8,14 +8,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.tsinghua.ss.client.R;
-
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link RecommendedFragment#newInstance} factory method to
+ * Use the {@link FollowsFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class RecommendedFragment extends Fragment {
+public class FollowsFragment extends Fragment {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -26,7 +24,7 @@ public class RecommendedFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    public RecommendedFragment() {
+    public FollowsFragment() {
         // Required empty public constructor
     }
 
@@ -36,11 +34,11 @@ public class RecommendedFragment extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment Recommended.
+     * @return A new instance of fragment Follows.
      */
     // TODO: Rename and change types and number of parameters
-    public static RecommendedFragment newInstance(String param1, String param2) {
-        RecommendedFragment fragment = new RecommendedFragment();
+    public static FollowsFragment newInstance(String param1, String param2) {
+        FollowsFragment fragment = new FollowsFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -61,6 +59,6 @@ public class RecommendedFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_recommended, container, false);
+        return inflater.inflate(R.layout.fragment_follows, container, false);
     }
 }

@@ -16,9 +16,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.tsinghua.ss.client.api.Api;
-import com.tsinghua.ss.client.bean.User;
-
 import java.io.BufferedWriter;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -28,6 +25,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import cn.leancloud.LCUser;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -106,34 +106,31 @@ public class LoginFragment extends Fragment {
             public void onClick(View view) {
                 String username = usernameEditText.getText().toString();
                 String password = passwordEditText.getText().toString();
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(getString(R.string.ServerIP))
-                        .addConverterFactory(GsonConverterFactory.create())
-                        .build();
-                Api api = retrofit.create(Api.class);
-                Map<String, String> post_params = new HashMap<>();
-                post_params.put("username", username);
-                post_params.put("password", password);
-                api.login(post_params).enqueue(new Callback<ResponseBody>() {
+                LCUser.logIn(username, password).subscribe(new Observer<LCUser>() {
                     @Override
-                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                        if (response.isSuccessful()) {
-                            CharSequence text = "登录成功";
-                            SharedPreferences.Editor preferenceEditor = sharedPreferences.edit();
-                            preferenceEditor.putString(USERNAME_KEY, usernameEditText.getText().toString());
-                            preferenceEditor.putString(PASSWORD_KEY, passwordEditText.getText().toString());
-                            preferenceEditor.apply();
-                            Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT).show();
-                            getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragmentContainerView, new IndexFragment(), null).addToBackStack(null).commit();
-                        }
-                        else {
-                            CharSequence text = "登录失败";
-                            Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT).show();
-                        }
+                    public void onSubscribe(Disposable d) {
+
                     }
 
                     @Override
-                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    public void onNext(LCUser lcUser) {
+                        CharSequence text = "登录成功";
+                        SharedPreferences.Editor preferenceEditor = sharedPreferences.edit();
+                        preferenceEditor.putString(USERNAME_KEY, usernameEditText.getText().toString());
+                        preferenceEditor.putString(PASSWORD_KEY, passwordEditText.getText().toString());
+                        preferenceEditor.apply();
+                        Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT).show();
+                        getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragmentContainerView, new IndexFragment(), null).addToBackStack(null).commit();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        CharSequence text = "登录失败";
+                        Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onComplete() {
 
                     }
                 });
