@@ -63,7 +63,7 @@ def user_edit(request):
 
 
 def get_all_users(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         data = {}
         users = User.objects.values()
         data['user_list'] = list(users)
@@ -71,8 +71,8 @@ def get_all_users(request):
 
 
 def get_user(request):
-    if request.method == 'GET':
-        username = request.GET.get('username')
+    if request.method == 'POST':
+        username = request.POST.get('username')
         user = User.objects.filter(username=username).values()
         data = {'user': list(user)}
         return JsonResponse(data, safe=False)
@@ -95,8 +95,8 @@ def unfollow(request):
 
 
 def get_followers(request):
-    if request.method == 'GET':
-        followee = request.GET.get('username')
+    if request.method == 'POST':
+        followee = request.POST.get('username')
         data = {}
         follower_list = []
         for i in Follow.objects.filter(followee=followee).all():
@@ -106,8 +106,8 @@ def get_followers(request):
 
 
 def get_followees(request):
-    if request.method == 'GET':
-        follower = request.GET.get('username')
+    if request.method == 'POST':
+        follower = request.POST.get('username')
         data = {}
         followee_list = []
         for i in Follow.objects.filter(follower=follower).all():
@@ -133,7 +133,7 @@ def unblock(request):
 
 
 def get_blockers(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         blocked = request.POST.get('username')
         data = {}
         blocker_list = []
@@ -144,7 +144,7 @@ def get_blockers(request):
 
 
 def get_blockeds(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         blocker = request.POST.get('username')
         data = {}
         blocked_list = []
@@ -194,7 +194,7 @@ def start_session(request):
 
 
 def get_sessions(request):
-    if request.method == 'GET':
+    if request.method == 'POST':
         username = request.POST.get('username')
         data = {}
         sessions = Session.objects.filter(username=username).values()
@@ -220,9 +220,9 @@ def post_moment(request):
 
 
 def get_moments(request):
-    if request.method == 'GET':
-        username = request.GET.get('username')
-        if request.GET.get('sorted_by') == 'new':
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        if request.POST.get('sorted_by') == 'new':
             data = {}
             moments = Moment.objects.all().values()
             moments_list = sorted(list(moments), key=lambda x: x['c_time'], reverse=True)
@@ -231,7 +231,7 @@ def get_moments(request):
                     moments_list.remove(i)
             data['list'] = moments_list
             return JsonResponse(data)
-        elif request.GET.get('sorted_by') == 'hot':
+        elif request.POST.get('sorted_by') == 'hot':
             data = {}
             moments = Moment.objects.all().values()
             moments_list = sorted(list(moments),
@@ -241,7 +241,7 @@ def get_moments(request):
                     moments_list.remove(i)
             data['list'] = moments_list
             return JsonResponse(data)
-        elif request.GET.get('sorted_by') == 'follow':
+        elif request.POST.get('sorted_by') == 'follow':
             data = {}
             followee = Follow.objects.get(follower=username)
             moments = Moment.objects.filter(username=followee.followee).values()
@@ -251,8 +251,8 @@ def get_moments(request):
                     moments_list.remove(i)
             data['list'] = moments_list
             return JsonResponse(data)
-        elif request.GET.get('sorted_by') == 'type':
-            _type = request.GET.get('type')
+        elif request.POST.get('sorted_by') == 'type':
+            _type = request.POST.get('type')
             data = {}
             moments = Moment.objects.filter(type=_type).values()
             moments_list = sorted(list(moments), key=lambda x: x['c_time'])
@@ -286,8 +286,8 @@ def unlike_moment(request):
 
 
 def get_like_moments(request):
-    if request.method == 'GET':
-        username = request.GET.get('username')
+    if request.method == 'POST':
+        username = request.POST.get('username')
         data = {}
         moment_list = []
         for i in Like.objects.filter(username=username).all():
@@ -298,8 +298,8 @@ def get_like_moments(request):
 
 
 def get_moment_likes(request):
-    if request.method == 'GET':
-        moment_id = request.GET.get('moment_id')
+    if request.method == 'POST':
+        moment_id = request.POST.get('moment_id')
         data = {}
         user_list = []
         for i in Like.objects.filter(moment_id=moment_id).all():
@@ -331,8 +331,8 @@ def unfavorite_moment(request):
 
 
 def get_favorite_moments(request):
-    if request.method == 'GET':
-        username = request.GET.get('username')
+    if request.method == 'POST':
+        username = request.POST.get('username')
         data = {}
         moment_list = []
         for i in Favorite.objects.filter(username=username).all():
@@ -342,8 +342,8 @@ def get_favorite_moments(request):
 
 
 def get_moment_favorites(request):
-    if request.method == 'GET':
-        moment_id = request.GET.get('moment_id')
+    if request.method == 'POST':
+        moment_id = request.POST.get('moment_id')
         data = {}
         user_list = []
         for i in Favorite.objects.filter(moment_id=moment_id).all():
@@ -365,8 +365,8 @@ def comment_moment(request):
 
 
 def get_comment_moments(request):
-    if request.method == 'GET':
-        username = request.GET.get('username')
+    if request.method == 'POST':
+        username = request.POST.get('username')
         data = {}
         moment_list = []
         for i in Comment.objects.filter(username=username).all():
@@ -380,8 +380,8 @@ def get_comment_moments(request):
 
 
 def get_moment_comments(request):
-    if request.method == 'GET':
-        moment_id = request.GET('moment_id')
+    if request.method == 'POST':
+        moment_id = request.POST('moment_id')
         data = {}
         comment_list = list(Comment.objects.filter(moment_id=moment_id).values())
         data['list'] = comment_list
@@ -398,8 +398,8 @@ def post_notification(request):
 
 
 def get_notifications(request):
-    if request.method == 'GET':
-        username = request.GET.get('username')
+    if request.method == 'POST':
+        username = request.POST.get('username')
         data = {}
         notifications = Notification.objects.filter(username=username).values()
         data['list'] = list(notifications)
