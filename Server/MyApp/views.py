@@ -15,7 +15,7 @@ def user_register(request):
         if User.objects.filter(username=username).exists():
             return JsonResponse({'error': 'Username is already taken.'}, status=400)
         if avatar:
-            avatar_path = 'static/' + username + '_avatar_' + avatar.name
+            avatar_path = 'http://39.101.74.64:8000/static/' + username + '_avatar_' + avatar.name
             with open(avatar_path, 'wb+') as f:
                 f.write(avatar.read())
         else:
@@ -205,17 +205,18 @@ def get_sessions(request):
 def post_moment(request):
     if request.method == 'POST':
         username = request.POST.get('username')
+        avatar = User.objects.get(username=username).avatar
         _type = request.POST.get('type')
         content = request.POST.get('content')
         media: File = request.FILES.get('media')
         if media:
-            save_path = 'static/' + username + '_post_' + str(int(time.time() * (10 ** 4))) + '_' + media.name
+            save_path = 'http://39.101.74.64:8000/static/' + username + '_post_' + str(int(time.time() * (10 ** 4))) + '_' + media.name
             with open(save_path, 'wb+') as f:
                 f.write(media.read())
         else:
             save_path = ''
         location = request.POST.get('location')
-        Moment(username=username, type=_type, content=content, media=save_path, location=location).save()
+        Moment(username=username, avatar=avatar, type=_type, content=content, media=save_path, location=location).save()
         return JsonResponse({'success': 'Post successfully.'})
 
 

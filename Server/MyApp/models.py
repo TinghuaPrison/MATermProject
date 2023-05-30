@@ -40,10 +40,11 @@ class Session(models.Model):
 
 class Moment(models.Model):
     username = models.CharField(max_length=30)
-    type = models.CharField(max_length=10)
-    content = models.TextField()
-    media = models.CharField(max_length=256)
-    location = models.CharField(max_length=100)
+    avatar = models.CharField(max_length=100)
+    type = models.CharField(max_length=10, default='未分类')
+    content = models.TextField(default=' ')
+    media = models.CharField(max_length=100, default='null')
+    location = models.CharField(max_length=100, default='null')
     likes_count = models.IntegerField(default=0)
     favorites_count = models.IntegerField(default=0)
     comments_count = models.IntegerField(default=0)
