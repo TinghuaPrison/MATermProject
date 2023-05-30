@@ -7,7 +7,7 @@ from . import models
 admin.site.register(models.User)
 admin.site.register(models.Block)
 admin.site.register(models.Like)
-admin.site.register(models.Post)
+admin.site.register(models.Moment)
 admin.site.register(models.Notification)
 admin.site.register(models.Message)
 admin.site.register(models.Favorite)

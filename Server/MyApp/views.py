@@ -1,10 +1,8 @@
-import os.path
 import time
 from django.contrib.auth.hashers import make_password, check_password
 from django.http import JsonResponse
 from django.core.files import *
 from .models import *
-from os import remove
 
 
 def user_register(request):
@@ -209,15 +207,15 @@ def post_moment(request):
         username = request.POST.get('username')
         _type = request.POST.get('type')
         content = request.POST.get('content')
-        medias = request.FILES.getlist('media')
-        media = ''
-        for fm in medias:
-            save_path = 'static/' + username + '_post_' + str(int(time.time() * (10 ** 4))) + '_' + fm.name
+        media: File = request.FILES.get('media')
+        if media:
+            save_path = 'static/' + username + '_post_' + str(int(time.time() * (10 ** 4))) + '_' + media.name
             with open(save_path, 'wb+') as f:
-                f.write(fm.read())
-            media += save_path + '##'
+                f.write(media.read())
+        else:
+            save_path = ''
         location = request.POST.get('location')
-        Moment(username=username, type=_type, content=content, media=media, location=location).save()
+        Moment(username=username, type=_type, content=content, media=save_path, location=location).save()
         return JsonResponse({'success': 'Post successfully.'})
 
 
@@ -237,7 +235,7 @@ def get_moments(request):
             data = {}
             moments = Moment.objects.all().values()
             moments_list = sorted(list(moments),
-                                key=lambda x: x['likes_count'] + x['favorites_count'] + x['comments_count'])
+                                  key=lambda x: x['likes_count'] + x['favorites_count'] + x['comments_count'])
             for i in moments_list:
                 if Block.objects.filter(blocker=username, blocked=i['username']):
                     moments_list.remove(i)
@@ -382,7 +380,7 @@ def get_comment_moments(request):
 
 
 def get_moment_comments(request):
-    if request.method =='GET':
+    if request.method == 'GET':
         moment_id = request.GET('moment_id')
         data = {}
         comment_list = list(Comment.objects.filter(moment_id=moment_id).values())
