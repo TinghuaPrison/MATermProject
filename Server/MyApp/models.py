@@ -13,34 +13,34 @@ class User(models.Model):
 
 
 class Follow(models.Model):
-    follower = models.CharField(max_length=30)
-    followee = models.CharField(max_length=30)
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
+    followee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followee')
 
 
 class Block(models.Model):
-    blocker = models.CharField(max_length=30)
-    blocked = models.CharField(max_length=30)
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocker')
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked')
+
+
+class Session(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='session_user')
+    target = models.ForeignKey(User, on_delete=models.CASCADE, related_name='session_target')
+    last_message = models.TextField()
+    message_cnt = models.IntegerField(default=0)
+    message_not_checked = models.IntegerField(default=0)
+    c_time = models.DateTimeField(auto_now=True)
 
 
 class Message(models.Model):
-    sender = models.CharField(max_length=30)
-    receiver = models.CharField(max_length=30)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name='session')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sender')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='receiver')
     content = models.TextField()
     c_time = models.DateTimeField(auto_now_add=True)
 
 
-class Session(models.Model):
-    username = models.CharField(max_length=30)
-    target = models.CharField(max_length=30)
-    last_message = models.TextField()
-    message_cnt = models.IntegerField(default=0)
-    message_not_checked = models.IntegerField(default=0)
-    c_time = models.DateTimeField(auto_now_add=True)
-
-
 class Moment(models.Model):
-    username = models.CharField(max_length=30)
-    avatar = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='moment_user')
     type = models.CharField(max_length=10, default='未分类')
     content = models.TextField(default=' ')
     media = models.CharField(max_length=100, default='null')
@@ -52,27 +52,29 @@ class Moment(models.Model):
 
 
 class Like(models.Model):
-    username = models.CharField(max_length=30)
-    moment_id = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='like_user')
+    moment = models.ForeignKey(Moment, on_delete=models.CASCADE, related_name='likes')
 
 
 class Favorite(models.Model):
-    username = models.CharField(max_length=30)
-    moment_id = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorite_user')
+    moment = models.ForeignKey(Moment, on_delete=models.CASCADE, related_name='favorites')
 
 
 class Comment(models.Model):
-    username = models.CharField(max_length=30)
-    moment_id = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comment_user')
+    moment = models.ForeignKey(Moment, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField()
     c_time = models.DateTimeField(auto_now_add=True)
 
 
 class Notification(models.Model):
-    username = models.CharField(max_length=30)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notification_user')
     title = models.CharField(max_length=30)
     content = models.TextField()
+    checked = models.BooleanField(default=False)
     c_time = models.DateTimeField(auto_now_add=True)
+
 
 
 
