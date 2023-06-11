@@ -51,7 +51,7 @@ def edit_avatar(request):
         else:
             avatar_path = 'static/default_avatar.png'
         with open(avatar_path, 'wb+') as f:
-            f.write(new_avatar.read)
+            f.write(new_avatar.read())
         _user = User.objects.get(username=username)
         _user.avatar = avatar_path
         _user.save()
@@ -222,7 +222,7 @@ def send_message(request):
         Notification.objects.create(
             user=receiver,
             title="New Message",
-            content=f"You have received a new message from {sender_username}: {content}"
+            content=f"{sender_username} have sent you a message: {content}"
         )
         return JsonResponse({'success': 'Message sent successfully.'})
 
@@ -308,19 +308,21 @@ def post_moment(request):
 def get_moments(request):
     if request.method == 'POST':
         username = request.POST.get('username')
-        if User.objects.filter(username=username).exists():
+        search_username = request.POST.get('search_user')
+        if User.objects.filter(username=search_username).exists():
             user = User.objects.get(username=username)
+            search_user = User.objects.get(username=search_username)
             blocked_users = [block.blocked for block in Block.objects.filter(blocker=user)]
 
             if request.POST.get('sorted_by') == 'user':
-                moments = Moment.objects.filter(user=user).exclude(user__in=blocked_users).order_by('-c_time')
+                moments = Moment.objects.filter(user=search_user).exclude(user__in=blocked_users).order_by('-c_time')
             elif request.POST.get('sorted_by') == 'new':
                 moments = Moment.objects.all().exclude(user__in=blocked_users).order_by('-c_time')
             elif request.POST.get('sorted_by') == 'hot':
                 moments = Moment.objects.all().exclude(user__in=blocked_users)
                 moments = reversed(sorted(moments, key=lambda x: x.likes_count + x.favorites_count + x.comments_count))
             elif request.POST.get('sorted_by') == 'follow':
-                followees = [follow.followee for follow in Follow.objects.filter(follower=user)]
+                followees = [follow.followee for follow in Follow.objects.filter(follower=search_user)]
                 moments = Moment.objects.filter(user__in=followees).exclude(user__in=blocked_users).order_by('-c_time')
             elif request.POST.get('sorted_by') == 'type':
                 _type = request.POST.get('type')
